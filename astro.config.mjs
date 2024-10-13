@@ -4,7 +4,9 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://alssdev.github.io',
+  base: '/cc8-rfc1',
   integrations: [starlight({
-    title: 'CC8 Physical Layer RFC'
+    title: 'CCVIII - Capa física'
   })]
 });
