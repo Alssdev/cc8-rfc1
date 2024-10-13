@@ -21,3 +21,46 @@ todas las dependencias. Luego de completar los pasos, deberías tener instalado:
 <Aside type="caution">
   Asegurate de configurar `PICO_SDK_PATH` en tus variables de entorno.
 </Aside>
+
+## 🛠️ Obtener el código
+
+Sigue los siguientes pasos para obtener una copia del código base de este proyecto.
+```bash
+git clone https://github.com/Alssdev/raspberry-pi-pico-spi-daisy-chain.git
+cd raspberry-pi-pico-spi-daisy-chain
+```
+
+Luego, abre el archivo `Makefile` y modifica la siguiente linea.
+```makefile
+# set pico board
+PICO_BOARD=pico_w       # pico_w or pico
+```
+
+También debes modificar el archivo `CMakeList.txt` para configurar el tipo de board que usaras.
+```cmake
+target_link_libraries(main
+  pico_stdlib
+  # Uncomment when using Pico W
+  pico_cyw43_arch_none        # comment if you are NOT using a pico_w
+  pico_multicore
+  hardware_spi
+  hardware_uart
+)
+```
+
+Finalmente, ejecuta el siguiente comando para compilar y asegurarte que todo está bien:
+```bash
+make
+```
+
+Ya podemos pasar a la parte de cargar código a la PI Pico.
+
+## 🚀 Flashing your board
+
+Para cargar el código compilado en la PI Pico esta base de código incluye un comando útil.
+Conecta tu PI Pico en **flash mode**, luego ejecuta el siguiente comando:
+
+```bash
+make flash
+````
+Ahora estás listo para escribir código! 🎉
