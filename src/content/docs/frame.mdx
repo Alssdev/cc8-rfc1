@@ -1,0 +1,27 @@
+---
+title: 'Frames'
+description: 'Detalles sobre los campos enviados en los frames'
+---
+import { Code } from '@astrojs/starlight/components';
+
+Nos referimos a `frames` como los mensajes enviados en la capa física, es decir, los mensajes
+enviados entre boards.
+
+## Estructura
+Una forma sencilla de manejar los `frames` es mediante un *struct* de C. Recordemos que un struct
+en C simplemente es la represetación en memoria de objeto. A continuación, se muestar el struct
+utilizado en este proyecto:
+
+```c
+/* frame definitions */
+enum frame_type { message, ACK };
+struct frame {
+  uint8_t id;                 // id of the sent frame.
+  enum frame_type type;
+  uint8_t to;                 // assigned in class
+  uint8_t from;               // assigned in class
+  char data[99];              // actual data
+};
+```
+Al utilizar un struct, estamos dejando que el compilador de C se encargue de definir cómo se
+acomodan los campos en memoria y cuántos y cuáles bits se transmiten entre las boards.

@@ -1,0 +1,44 @@
+---
+title: 'Conceptos'
+description: 'Explicación de una Daisy Chain.'
+---
+import { Aside } from '@astrojs/starlight/components';
+
+La idea principal para la capa física es crear una **Daisy Chain** utilizando las Raspberry Pi Picos.
+
+## Daisy Chain
+> Es una sucesión de enlaces, tal que un dispositivo A es conectado a un dispositivo B,
+el mismo dispositivo B a un dispositivo C, este dispositivo C a un dispositivo D, y así sucesivamente
+hasta que el último dispositivo es conectado a A, cerrando la cadena.
+
+![](/cc8-rfc1/daisy_chain.gif)
+
+Esta idea permite que los mensajes viajen a través de todos los nodos, y que cada board verifique si
+el mensaje está destinado a él. Si no lo está, deja que el mensaje continúe propagándose.
+
+## Como implementarlo
+Para comenzar, debemos escoger un protocolo de transimisión de datos para comunicar varios
+boards, en clase escogimos **SPI** por ser fácil de implementar en código.
+<Aside type="tip">
+Visita la [documentación del SDK](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#group_hardware_spi) para
+más información sobre SPI.
+</Aside>
+
+Luego, como pudimos ver el gif de arriba, cada *peripheral* o board debe ser capas de recibir y enviar
+datos, es decir, actuar como `Master` y `Slave` en paralelo. [documentación del SDK](https://www.raspberrypi.com/documentation/pico-sdk/hardware.html#group_hardware_spi)
+dice lo siguiente:
+> RP-series microcontrollers have 2 identical instances of the Serial Peripheral Interface (SPI) controller.
+
+Dado que las PI Pico tiene 2 módulos SPI idénticos, faćilmente podemos configurar uno como `Master` y otro como
+`Slave` para poder enviar y recibir información respectivamente.
+<Aside>
+El código base ya incluye la configuración de los módulos SPI para `Master` y `Slave`. Consulta los archivos
+`master.c` y `slave.c` para más información.
+</Aside>
+
+## Consideraciones
+Lo más importante en una Daisy Chain es asegurar que los mensajes viajan correctamente y que no se pierda ni un solo bit
+en el camino. A continuación se detallan otras consideraciones:
+- **Velocidad**. La velocidad de la red será igual a la del board más lento. Si una PI Pico no es rápida en el procesamiento
+de los `frames`, entonces toda la red se ve afectada.
+- **Seguridad**. Los `frames` pasan por varios boards antes de llegar a su destino.
