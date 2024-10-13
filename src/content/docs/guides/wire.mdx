@@ -1,0 +1,102 @@
+---
+title: "¿Cómo conectar las PI Pico?"
+description: "Explica como conectar varias PI Pico."
+---
+import { Aside } from '@astrojs/starlight/components';
+
+![Diagrama de la Raspberry PI Pico.](/schema.png)
+
+Como podemos ver en la imagen anterior, hay muchos pines con funciones similares
+e incluso con funciones repetidas, sin embargo, **no es difícil** conectar varias PI Pico 
+para este proyecto.
+
+## SPI Master y Slave
+Recordemos que las Raspberry PI Pico incluyen 2 módulos idénticos de SPI, en este proyecto
+necesitamos utilizar ambos. Un módulos será *Master* y otro será *Slave*. 
+
+### Master
+En esta base de código, el módulo SPI Master es `spi1`. Tanto el módulo como los pines a utilizar
+los puedes cambiar en el archivo `master.c`.
+
+```c
+void master_init () {
+  // enable SPI0 at 1kHz
+  spi_init (spi1, BAUDRATE);
+
+  // assign SPI functions to default SPI pint.
+  // for more info read RP2040 Datasheet(2.19.2. Function Select).
+  // gpio_set_function (PICO_DEFAULT_SPI_RX_PIN, GPIO_FUNC_SPI);
+  gpio_set_function (10, GPIO_FUNC_SPI);
+  gpio_set_function (11, GPIO_FUNC_SPI);
+  gpio_set_function (13, GPIO_FUNC_SPI); 
+}
+```
+<Aside type="caution">
+  Si quieres cambiar los pines del SPI Master, recuerda que SOLAMENTE debes utilizar
+  `SCK`, `TX`, `CSn`.
+</Aside>
+<Aside type="tip">
+  Los números `10`, `11` y `13` hacen referencia a `GP10`, `GP11` y `GP13` (En el diagrama son los
+  cuadritos verdes). NO los confundas con los pines 10, 11 y 13.
+</Aside>
+
+
+### Slave
+En esta base de código, el módulo SPI Slave es `spi0`. Tanto el módulo como los pines a utilizar
+los puedes cambiar en el archivo `slave.c`.
+
+```c
+void slave_init (void) {
+  // enable SPI0 at 10kHz
+  spi_init (spi0, BAUDRATE);
+  spi_set_slave (spi0, true);
+
+  // assign SPI functions to default SPI pint.
+  // for more info read RP2040 Datasheet(2.19.2. Function Select).
+  gpio_set_function (16, GPIO_FUNC_SPI);
+  gpio_set_function (17, GPIO_FUNC_SPI);
+  gpio_set_function (18, GPIO_FUNC_SPI);
+  // gpio_set_function (19, GPIO_FUNC_SPI);
+
+  // Enable the RX FIFO interrupt (RXIM)
+  spi0_hw->imsc = 1 << 2;
+
+  // Enable the SPI interrupt
+  irq_set_enabled (SPI0_IRQ, 1);
+
+  // Attach the interrupt handler
+  irq_set_exclusive_handler (SPI0_IRQ, spiReceiveISR);
+
+  // init list
+  sem_init (&receive_sema, 1, 1);
+  list_init (&receive_list);
+}
+```
+<Aside type="caution">
+  Si quieres cambiar los pines del SPI Master, recuerda que SOLAMENTE debes utilizar
+  `SCK`, `RX`, `CSn`.
+</Aside>
+<Aside type="tip">
+  Los números `16`, `17` y `18` hacen referencia a `GP16`, `GP17` y `GP18` (En el diagrama son los
+  cuadritos verdes). NO los confundas con los pines 16, 17 y 18.
+</Aside>
+
+## Conectando las PI Pico
+Ahora sí, vamos a conectar las PI Pico. Para hacerlo sigue las siguites restricciones:
+- Un pin `TX` SIEMPRE va a un `RX`
+- El módulo `Master` de una PI Pico SIEMPRE va conectado al módulo `Slave` de otra.
+- TODAS las PI Pico deben compartir `GND`. Puedes usar cualquiera de los pines con funcion `GND`.
+
+Si no cambias los pines de los módulos SPI Master y Slave, puedes utilizar el siguiente diagrama para
+conectar las PI Pico.
+
+![Diagrama para conetar PI Picos](/wire.png)
+
+<Aside type="tip">
+  Es buena idea repasar los conceptos de una *Daisy Chain* para comprender completamente este proyecto.
+</Aside>
+
+<Aside>
+  Para conectar varias PI Pico simplemente hay que conectarlas en serie (El Master va al siguiente Slave) y
+  eventualmente se forma un anillo de PI Picos.
+</Aside>
