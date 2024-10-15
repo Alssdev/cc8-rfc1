@@ -1,0 +1,27 @@
+---
+title: 'Termonilogía'
+description: 'Palabras raras utilizadas'
+---
+
+
+En esta sección se definen algunos términos utilizados a lo largo de esta guia.
+
+ - <span style="color:#b4c8fd">**Frame**</span>: Son los mensajes que se 
+ intercambian en la capa física. Los frames son  de 103 Bytes de largo y se transmiten mediante SPI.
+ 
+ - <span style="color:#b4c8fd">**Segmento**</span> :Son los mensajes que la capa física
+ intercambia con la capa de driver. Estos mensajes son trasmitidos mediante UART.
+
+ - <span style="color:#b4c8fd">**MSS**</span>: Tamaño máximo de los *segmentos*. _En este proyecto
+ el tamaño de los segmentos es fijo y es MSS._
+
+ - <span style="color:#b4c8fd">**Board**</span>: Raspberry PI Pico, NUCLEO K8, etc. Esta guia
+ fue hecha para la PI Pico. 
+
+ - <span style="color:#b4c8fd">**SPI**</span>: Protocolo de comunicación serial para la
+ capa física. Los distintos boards se hablan entre ellos por medio de SPI.
+
+ - <span style="color:#b4c8fd">**UART**</span>: Protocolo de comunicación serial entre la
+ capa física y la capa de driver.
+ - <span style="color:#b4c8fd">**Capa de Driver**</span>: Capa de este proyecto que está
+ inmediatamente sobre la capa física. Otros grupos le llaman *Capa de enlace*.
