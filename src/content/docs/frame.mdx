@@ -2,7 +2,7 @@
 title: 'Frames'
 description: 'Detalles sobre los campos enviados en los frames'
 ---
-import { Code } from '@astrojs/starlight/components';
+import { Code, Aside } from '@astrojs/starlight/components';
 
 Nos referimos a `frames` como los mensajes enviados en la capa física, es decir, los mensajes
 enviados entre boards.
@@ -25,3 +25,43 @@ struct frame {
 ```
 Al utilizar un struct, estamos dejando que el compilador de C se encargue de definir cómo se
 acomodan los campos en memoria y cuántos y cuáles bits se transmiten entre las boards.
+
+## Frames a nivel de Bytes
+Como mencionamos anteriormente, cuando definimos un struct, el compilador de C acomodará los campos
+en memoria como le convenga. Es por esta razón que al utilizar la función `sizeof` a veces obtenemos
+tamaños más grandes que la suma de los tamaños de sus campos. Aquí va un ejemplo:
+
+```c
+#define MSS 99
+
+/* frame definition. */
+enum frame_type { message, ACK };
+struct frame {
+  uint8_t id;                 // 1 Byte 
+  enum frame_type type;       // 1 Byte
+  uint8_t to;                 // 1 Byte 
+  uint8_t from;               // 1 Byte 
+  char data[MSS];             // MSS Bytes (99 Bytes)
+};
+
+// ...
+
+uint32_t size = sizeof(struct frame);
+// size = 103 Bytes
+```
+
+<Aside type="danger">
+  Diferentes versiones del compilador de C pueden causar que el struct no se guarde en memoria de la
+  misma forma. Si sospechas que esto te está pasando busca ayuda con otro Grupo e impriman el contenido
+  en memoria de sus `frames`.
+</Aside>
+
+Luego de realizar pruebas con otros grupos, hemos comprobando que los frames se representan en memoria
+de la siguiente manera:
+
+![Imagen de un frame en memoria](/cc8-rfc1/frame.png)
+
+<Aside type="caution">
+Si deseas utilizar *MicroPython* o cualquier otro lenguaje que no sea C, procura transmitir los bytes
+por SPI de esta forma. De lo contrario, nadie podrá comunicarse contigo.
+</Aside>
