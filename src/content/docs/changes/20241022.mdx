@@ -100,3 +100,54 @@ Asegurate de revisar el código nuevo en los siguientes archivos:
   - `slave.c`: Validar checksums.
   - `master.c`: Armar checksums.
   - `frame.h`: Nuevo struct frame.
+
+## Lectura de un frame
+Ahora que la `data` de los frames puede ser de tamaño variable hay que actualizar la forma en la que
+se leen los frames por medio de SPI. La modificación es sencilla:
+
+```c
+// slave.c
+void spiReceiveISR () {
+  // 1. Crear buffers
+  uint8_t header[4];
+  uint8_t *data;
+
+  // 2. leer los bytes del header
+  spi_read_blocking (spi0, 0, header, 4);
+
+  // 3. validar el checksum (ver sección anterior)
+  // ...
+
+  // 4. crear frame
+  struct frame *f = malloc(sizeof *f);
+  f->to = header[0];
+  f->from = header[1];
+  f->length = header[2];
+  f->header_checksum = header[3];
+
+  // 5. leer data
+  f->data = malloc(f->length);
+  spi_read_blocking (spi0, 0, f->data, f->length);
+
+  // 6. agregar a una lista, buffer, etc
+  // ...
+}
+```
+
+## Escritura de un frame
+De la misma forma que la lectura de un frame, la escritura es bastante simple:
+```c
+// master.c
+
+void master_propagate (struct frame *f) {
+  // 1. escribir headers 
+  spi_write_blocking (spi1, &f->to, 1);
+  spi_write_blocking (spi1, &f->from, 1);
+  spi_write_blocking (spi1, &f->length, 1);
+  spi_write_blocking (spi1, &f->header_checksum, 1);
+
+  // 2. escribir la data 
+  spi_write_blocking (spi1, f->data, f->length);
+}
+
+```
