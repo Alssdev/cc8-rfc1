@@ -1,0 +1,102 @@
+---
+title: 'Tamaño variables de frames'
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Badge } from '@astrojs/starlight/components';
+
+<Aside type="danger">
+  Varios archivos fueron modificados por esta actualización, asegurate de revisarlos todos.
+</Aside>
+
+El tamaño variable de frames es un feature que todos los protocolos de red vistos en clase manejan,
+por lo que este proyecto no se puede quedar atrás. A continuación se detalla paso a paso las secciones
+que cambiaron en el código base y se expone la razón del cambio.
+
+## Nuevos campos en el header
+![Nuevos headers de la physical-layer](/cc8-rfc1/20241022/headers.png)
+Esto es puramente conceptual, en la siguiente sección se muestra cómo se implementó en el código. A continuación 
+se detallan cada uno de los campos.
+
+  - **To**: El `MACHINE_ID` de la board destino.
+  - **From**:<Badge text="Unused" variant="caution" /> El `MACHINE_ID` de la board origen. 
+  - **Length**:<Badge text="New" variant="success" /> Tamaño en Bytes de `data`. 
+  - **Checksum**:<Badge text="New" variant="success" /> Bytes para verificar que los headers del frame no fueron corrompidos. 
+  - **Data**: Datos provenientes de la capa de `Driver`/`Enlace`.
+
+## Nuevo `struct frame`
+```c
+// frame.h
+
+/* frame definitions */
+struct frame {
+  uint8_t to;
+  uint8_t from;
+  uint8_t length;
+  uint8_t header_checksum;
+  uint8_t *data;
+};
+```
+Como se puede observar, el nuevo `struct frame` está formado por los mismos campos que el header
+de la sección anterior.
+
+<Aside>
+  A partir de esta nueva versión ya no es necesario que los campos del `struct frame` estén en el mismo orden.
+</Aside>
+
+## Campo `Length` del header
+Como ya se explico, `length` indica el tamaño en Bytes de la `data` enviada en el frame. Usarlo es bastante
+fácil.
+```c
+f->lenght = 10; // 10 Bytes de data
+// calculate checksum ...
+f->data = malloc(f->length);
+```
+
+## Checksum
+En esta sección se detallará la implementació del checksum para los *headers de los frames*. Que quede claro,
+EL CHECKSUM SE CALCULA SOBRE LOS HEADERS SOLAMENTE.
+
+### Cálculo del checksum
+Para calcular el checksum se puede utilizar siempre la misma fórmula.
+```c
+// mensaje de ejemplo
+char *data = "Mensaje que viene de la capa del driver";
+
+// creacion de un frame de ejemplo
+struct frame *f = malloc(sizeof *f);
+f->to = 0x4;
+f->from = 0x2;
+f->length = strlen(data) + 1;
+
+// formula para calcular checksum
+f->header_checksum = ((f->to + f->from + f->length) ^ 0xFF) + 0x1;
+```
+### Validación del checksum
+Para validar el check se puede utilizar siempre la misma fórmula.
+
+```c
+// leyendo los headers de un frame entrante por SPI
+uint8_t header[4];
+spi_read_blocking (spi0, 0, header, 4);
+
+// validate checksum
+/*
+ * header[0] -> to
+ * header[1] -> from
+ * header[2] -> length
+ * header[3] -> checksum
+*/
+uint8_t valid = header[0] + header[1] + header[2] + header[3];
+if (valid == 0) {
+  // checksum OK
+} else {
+  // checksum ERROR
+}
+```
+
+## Archivos modificados
+Asegurate de revisar el código nuevo en los siguientes archivos:
+  - `router.c`: Ejemplo para construir un frame.
+  - `slave.c`: Validar checksums.
+  - `master.c`: Armar checksums.
+  - `frame.h`: Nuevo struct frame.

@@ -1,0 +1,50 @@
+---
+title: 'Recuperación de Checksum Errors'
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Cuando ocurra un `checksum error` debemos descartar TODO el frame que acaba de llegar porque seguramente
+se corrompió en el camino. Sin embargo, como ahora manejamos tamaño de `data` variable, surge un problema.
+
+ - *Cómo sé qué Bytes son del frame corrompido y cuáles son del siguiente frame en la cola?*
+
+Respuesta corta: **No podemos saberlo.**
+
+## Solución
+La solución a este problema se muestra en el siguiente diagrama:
+![Diagrama para recuperación de errores](/cc8-rfc1/20241022/diagram.png)
+
+Cuando esto ocurre, lo que debemos hacer es ir descartando los Bytes entrantes (`SPI`) hasta que encontremos un
+checksumen "correcto". En realidad, puede darse el caso en el que el checksum nos quede "correcto" por pura
+casualidad... **aún estamos trabajando en ello.**
+
+
+## Implementación
+Para no complicarnos, el código fue actualizado para incluir este feature. A continuación, se muestra la 
+implementación.
+```c
+// slave.c
+
+void spiReceiveISR () {
+  // ...
+
+  // validate checksum
+  uint8_t valid = header[0] + header[1] + header[2] + header[3];
+  while (valid != 0) {
+    printf("checksum error\n");
+    header[0] = header[1];
+    header[1] = header[2];
+    header[2] = header[3];
+
+    spi_read_blocking (spi0, 0, &header[3], 1);
+    
+    // try agin
+    valid = header[0] + header[1] + header[2] + header[3];
+  }
+
+  // ...
+}
+```
+<Aside type="tip">
+  Revisa el archivo `slave.c` para ver el código completo.
+</Aside>

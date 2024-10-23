@@ -11,6 +11,13 @@ export default defineConfig({
       title: 'CCVIII - Capa física',
       sidebar: [
         // A link to a non-docs page on this site.
+        {
+          label: 'NUEVOS CAMBIOS',
+          items: [
+            { label: '22 Oct - Tamaño variables de frames', slug: 'changes/20241022' },
+            { label: '22 Oct - Recuperación de Checksum Errors', slug: 'changes/20241022_2' },
+          ]
+        },
         { slug: '' },
         { slug: 'terminology' },
         { slug: 'concepts' },
